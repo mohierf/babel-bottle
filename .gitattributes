@@ -1,17 +1,24 @@
-# Auto detect text files and perform LF normalization
+# Autodetect text files
 * text=auto
 
-# Custom for Visual Studio
-*.cs     diff=csharp
+# Force the following filetypes to have unix eols, so Windows does not break them
+*.* text eol=lf
 
-# Standard to msysgit
-*.doc	 diff=astextplain
-*.DOC	 diff=astextplain
-*.docx diff=astextplain
-*.DOCX diff=astextplain
-*.dot  diff=astextplain
-*.DOT  diff=astextplain
-*.pdf  diff=astextplain
-*.PDF	 diff=astextplain
-*.rtf	 diff=astextplain
-*.RTF	 diff=astextplain
+# Force images/fonts to be handled as binaries
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.png binary
+*.t3x binary
+*.t3d binary
+*.exe binary
+*.data binary
+*.ttf binary
+*.eof binary
+*.eot binary
+*.swf binary
+*.mov binary
+*.mp4 binary
+*.mp3 binary
+*.ogg binary
+*.flv binary
