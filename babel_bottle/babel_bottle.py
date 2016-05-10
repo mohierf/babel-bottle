@@ -66,31 +66,7 @@ operators.sort(key=lambda a: -len(a))
 escapes = {'b': '\b', 'f': '\f', 'n': '\n', 'r': '\r', 't': '\t'}
 
 rules = [
-    (None, re.compile(r'\s+(?u)')),
-    # (None, re.compile(r'<!--.*')),
-    ('linecomment', re.compile(r'//.*')),
-    ('multilinecomment', re.compile(r'/\*.*?\*/(?us)')),
-    # Multi line HTML comment
-    ('html_comment', re.compile(r'<!--.*[^->]-->')),
-    ('html_multilinecomment', re.compile(r'<!--.*?-->', re.DOTALL)),
-    # HTML tag
-    ('html_doc', re.compile(r'<!DOCTYPE html>')),
-    ('html_tag', re.compile(r'<\w+>(?i)')),
-    ('html_tag_open', re.compile(r'<\w+(?i)')),
-    ('html_tag_close', re.compile(r'<(?:/?)\w+>(?i)')),
-    ('name', re.compile(r'(\$+\w*|[^\W\d]\w*)(?u)')),
-    ('fct_name', re.compile(r'(\$+\w*|[^\W\d]\w*)(?u)')),
-    ('number', re.compile(r'''(?x)(
-        (?:0|[1-9]\d*)
-        (\.\d+)?
-        ([eE][-+]?\d+)? |
-        (0x[a-fA-F0-9]+)
-    )''')),
-    ('operator', re.compile(r'(%s)' % '|'.join(map(re.escape, operators)))),
-    ('string', re.compile(r'''(?xs)(
-        '(?:[^'\\]*(?:\\.[^'\\]*)*)'  |
-        "(?:[^"\\]*(?:\\.[^"\\]*)*)"
-    )'''))
+    ('translation', re.compile(r'''{{_\('([^']*)'\)}}'''))
 ]
 
 division_re = re.compile(r'/=?')
@@ -196,12 +172,6 @@ def tokenize(source):
         # the status of `may_divide` which is determined by the last
         # processed non-whitespace token using `indicates_division`.
         else:
-            if may_divide:
-                match = division_re.match(source, pos)
-                token_type = 'operator'
-            else:
-                match = regex_re.match(source, pos)
-                token_type = 'regexp'
             if match is None:
                 # woops. invalid syntax. jump one char ahead and try again.
                 pos += 1
@@ -238,7 +208,16 @@ def extract_tpl(fileobj, keywords, comment_tags, options):
     call_stack = -1
 
     for token in tokenize(fileobj.read().decode(encoding)):
+        if token.type == 'translation':
+            print "Found translation call:", token.value, token.lineno
+            regex = re.compile( "\('(.*)'\)" )
+            found = regex.search(token.value)
+            if found and found.group(1):
+                print "Found:", found.group(1)
+                yield (token.lineno, '_', found.group(1), [])
+
         if token.type == 'string':
+            print "Found string:", token.value
             regex = re.compile( "\('(.*)'\)" )
             found = regex.search(token.value)
             if found and found.group(1):
@@ -305,7 +284,7 @@ def extract_tpl(fileobj, keywords, comment_tags, options):
                 call_stack = -1
 
             elif token.type == 'string':
-                print token
+                print "String:", token
                 new_value = unquote_string(token.value)
                 if concatenate_next:
                     last_argument = (last_argument or '') + new_value
